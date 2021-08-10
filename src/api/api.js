@@ -2,7 +2,6 @@ import * as axios from "axios";
 
 //===================================== configs
 let axiosWeatherConfig = {
-    key: '97b623f9f087c14f8f7c5c3dd0fdaa8f',
     baseURL: 'https://api.openweathermap.org/data/2.5/',
     headers : {
       'Content-Type': 'application/json'
@@ -10,7 +9,6 @@ let axiosWeatherConfig = {
 }
 
 let axiosPlacesConfig = {
-    key: 'AIzaSyD27IdH61prZPK9Mjy9Mlhj4ZgqBKEuCmM',
     baseURL: 'https://maps.googleapis.com/maps/api/',
     headers : {
       'Content-Type': 'application/json'
