@@ -1,20 +1,15 @@
 import React from "react";
-import { useState, useEffect } from 'react';
+import { useTranslation } from "react-i18next";
 
 const FeelsLikeComponent = (props) => {
-    let [temp, setTemp] = useState('')
-
-    useEffect(() => {
-        setTemp(Math.round(props.temp))
-    },[]);
+  const { t } = useTranslation();
+  const temp = Math.round(props.temp);
 
   return (
     <div className="feels-like">
-      <span className="title">
-          Feels like: 
-      </span>
-      { temp > 0 ? '+' : temp === 0 ? '' : ''} 
-      { temp } °C 
+      <span className="title">{t("feelsLike")}</span>
+      {temp > 0 ? "+" : temp === 0 ? "" : ""}
+      {temp} °C
     </div>
   );
 };

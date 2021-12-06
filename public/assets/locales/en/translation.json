@@ -1,0 +1,33 @@
+{
+  "search": {
+    "btn": "Add"
+  },
+  "feelsLike": "Feels like",
+  "wind": "Wind:",
+  "humidity": "Humidity:",
+  "pressure": "Pressure:",
+  "m/s": "m/s",
+  "months": {
+    "Jan": "January",
+    "Feb": "February",
+    "Mar": "March",
+    "Apr": "April",
+    "May": "May",
+    "Jun": "June",
+    "Jul": "July",
+    "Aug": "August",
+    "Sep": "September",
+    "Oct": "October",
+    "Nov": "November",
+    "Dec": "December"
+  },
+  "days": {
+    "Sun": "Sun",
+    "Mon": "Mon",
+    "Tue": "Tue",
+    "Wed": "Wed",
+    "Thu": "Thu",
+    "Fri": "Fri",
+    "Sat": "Sat"
+  }
+}

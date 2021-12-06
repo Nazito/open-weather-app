@@ -4,34 +4,30 @@ import { connect } from "react-redux";
 import { getLocationThunk } from "../redux/geolocation-reducer";
 // import { getWeatherThunk } from "../redux/weather-reducer";
 
-const WeatherItemContainer = props => {
-    // debugger
-
-  useEffect(()=>{
-    props.getLocationThunk(props.lat, props.lng)
+const WeatherItemContainer = (props) => {
+  useEffect(() => {
+    props.getLocationThunk(props.lat, props.lng);
     // props.getWeatherThunk(props.lat, props.lng)
 
-    console.log('rrr', props.weatherItem)
-  }, [])
+    console.log("rrr", props.weatherItem);
+  }, []);
 
   return (
     <WeatherCardItem
-        order={props.index}
-        // item={item}
-        locality={props.locality}
-        weather={props.weather}
-        hourses={props.hourses}
-        tempHourly={props.tempHourly}
-        tempMax={props.tempMax}
-        tempMin={props.tempMin}
-        palette={props.palette}
-    />  
-  )
-  
-}
+      order={props.index}
+      // item={item}
+      locality={props.locality}
+      weather={props.weather}
+      hourses={props.hourses}
+      tempHourly={props.tempHourly}
+      tempMax={props.tempMax}
+      tempMin={props.tempMin}
+      palette={props.palette}
+    />
+  );
+};
 
 let mapStateToProps = (state) => {
-    // debugger
   return {
     locality: state.geolocationReducer.locality,
     weather: state.weatherReducer.weather,
@@ -42,13 +38,10 @@ let mapStateToProps = (state) => {
     palette: state.weatherReducer.palette,
 
     weatherItem: state.weatherReducer.weatherItem,
-  }
+  };
 };
 
-export default connect(
-    mapStateToProps, 
-    {
-    getLocationThunk, 
-    // getWeatherThunk
-    }
-  )(WeatherItemContainer);
+export default connect(mapStateToProps, {
+  getLocationThunk,
+  // getWeatherThunk
+})(WeatherItemContainer);
