@@ -1,9 +1,74 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import WeatherCardItem from "./WeatherCardItem";
+
+const SortableWeatherCard = ({
+  item,
+  order,
+  removeWeatherCard,
+  getUnitsThunk,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: String(item.id) });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`grid__col${isDragging ? " grid__col--dragging" : ""}`}
+    >
+      <WeatherCardItem
+        order={order}
+        dataCard={item}
+        removeWeatherCard={removeWeatherCard}
+        getUnitsThunk={getUnitsThunk}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+};
 
 const WeatherList = (props) => {
   const { t } = useTranslation();
+  const itemIds = useMemo(
+    () => props.weatherList.map((item) => String(item.id)),
+    [props.weatherList]
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   if (props.weatherList.length === 0) {
     return (
@@ -24,20 +89,42 @@ const WeatherList = (props) => {
     );
   }
 
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !props.reorderWeatherCards) return;
+
+    const fromIndex = props.weatherList.findIndex(
+      (item) => String(item.id) === String(active.id)
+    );
+    const toIndex = props.weatherList.findIndex(
+      (item) => String(item.id) === String(over.id)
+    );
+
+    if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex) {
+      props.reorderWeatherCards(fromIndex, toIndex);
+    }
+  };
+
   return (
-    <div className="grid">
-      {props.weatherList.map((item, index) => (
-        <div className="grid__col" key={item.id}>
-          <WeatherCardItem
-            order={index}
-            dataCard={item}
-            removeWeatherCard={props.removeWeatherCard}
-            getUnitsThunk={props.getUnitsThunk}
-            getWeatherDataThunk={props.getWeatherDataThunk}
-          />
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+        <div className="grid">
+          {props.weatherList.map((item, index) => (
+            <SortableWeatherCard
+              key={item.id}
+              item={item}
+              order={index}
+              removeWeatherCard={props.removeWeatherCard}
+              getUnitsThunk={props.getUnitsThunk}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 

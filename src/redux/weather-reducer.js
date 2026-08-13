@@ -4,6 +4,7 @@ const SET_UNITS = "SET_UNITS";
 const REMOVE_WEATHER_CARD = "REMOVE_WEATHER_CARD";
 const ADD_WEATHER_ITEM = "ADD_WEATHER_ITEM";
 const SET_WEATHER_LIST = "SET_WEATHER_LIST";
+const REORDER_WEATHER_LIST = "REORDER_WEATHER_LIST";
 
 let initialState = {
   weatherList: [],
@@ -31,7 +32,7 @@ const weatherReducer = (state = initialState, action) => {
         ),
       };
 
-    case SET_UNITS:
+    case SET_UNITS: {
       let newList = state.weatherList.map((item) => {
         if (item.id === action.payload.id) {
           return action.payload;
@@ -44,6 +45,29 @@ const weatherReducer = (state = initialState, action) => {
         ...state,
         weatherList: newList,
       };
+    }
+
+    case REORDER_WEATHER_LIST: {
+      const { fromIndex, toIndex } = action.payload;
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= state.weatherList.length ||
+        toIndex >= state.weatherList.length
+      ) {
+        return state;
+      }
+
+      const nextList = [...state.weatherList];
+      const [moved] = nextList.splice(fromIndex, 1);
+      nextList.splice(toIndex, 0, moved);
+
+      return {
+        ...state,
+        weatherList: nextList,
+      };
+    }
 
     default:
       return state;
@@ -70,6 +94,34 @@ export const removeWeatherCard = (payload) => ({
   payload,
 });
 
+export const reorderWeatherList = (fromIndex, toIndex) => ({
+  type: REORDER_WEATHER_LIST,
+  payload: { fromIndex, toIndex },
+});
+
+export const reorderWeatherCards = (fromIndex, toIndex) => (
+  dispatch,
+  getState
+) => {
+  if (fromIndex === toIndex) return;
+
+  dispatch(reorderWeatherList(fromIndex, toIndex));
+
+  const orderedCards = getState().weatherReducer.weatherList;
+  const params = JSON.parse(localStorage.getItem("params")) || [];
+  const paramsById = params.reduce((acc, item) => {
+    acc[item.id] = item;
+    return acc;
+  }, {});
+
+  const nextParams = orderedCards
+    .map((card) => paramsById[card.id])
+    .filter(Boolean);
+
+  if (nextParams.length === params.length) {
+    localStorage.setItem("params", JSON.stringify(nextParams));
+  }
+};
 export const getWeatherDataListThunk = (paramsList) => async (dispach) => {
   if (!paramsList || paramsList.length === 0) {
     dispach(setWeatherList([]));

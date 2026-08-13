@@ -100,26 +100,53 @@ const WeatherCardItem = (props) => {
 
   return (
     <div className="weatherCardItem">
+      <button
+        type="button"
+        className="removeBtn"
+        onClick={handleRemoveCard}
+        aria-label={t("removeCard")}
+      >
+        <span className="removeBtn__inner" aria-hidden="true" />
+      </button>
+
       <div className="weatherCardItem__Top">
-        <LocalityComponent locality={dataCard.geoData} />
-        <IconInfoComponent iconInfo={dataCard.weatherData.current.weather[0]} />
+        <div
+          className="weatherCardItem__dragHandle"
+          aria-label={t("dragCard")}
+          title={t("dragCard")}
+          {...(props.dragHandleProps || {})}
+        >
+          <svg viewBox="0 0 12 18" width="14" height="20" aria-hidden="true">
+            <circle cx="3" cy="3.5" r="1.6" fill="currentColor" />
+            <circle cx="9" cy="3.5" r="1.6" fill="currentColor" />
+            <circle cx="3" cy="9" r="1.6" fill="currentColor" />
+            <circle cx="9" cy="9" r="1.6" fill="currentColor" />
+            <circle cx="3" cy="14.5" r="1.6" fill="currentColor" />
+            <circle cx="9" cy="14.5" r="1.6" fill="currentColor" />
+          </svg>
+        </div>
 
-        <button className="removeBtn" onClick={handleRemoveCard}>
-          <div className="removeBtn__inner"></div>
-        </button>
-      </div>
-
-      <div className="weatherCardItem__CityDate">
-        <DateComponent
-          date={dateBuilder(dataCard.weatherData.current.dt)}
-          hourse={formatHour(dataCard.weatherData.current.dt)}
-        />
+        <div className="weatherCardItem__TopMain">
+          <div className="weatherCardItem__TopMeta">
+            <LocalityComponent locality={dataCard.geoData} />
+            <div className="weatherCardItem__CityDate">
+              <DateComponent
+                date={dateBuilder(dataCard.weatherData.current.dt)}
+                hourse={formatHour(dataCard.weatherData.current.dt)}
+              />
+            </div>
+          </div>
+          <IconInfoComponent
+            iconInfo={dataCard.weatherData.current.weather[0]}
+          />
+        </div>
       </div>
 
       <div className="weatherCardItem__Center">
         <ChartComponent hourly={dataCard.weatherData.hourly} />
         <HoursesComponent hourses={hourLabels} />
       </div>
+
       <div className="weatherCardItem__Bottom">
         <div className="weatherCardItem__Bottom_Left">
           <div className="temp">
@@ -162,6 +189,7 @@ export default React.memo(WeatherCardItem, (prev, next) => {
     prev.order === next.order &&
     prev.dataCard === next.dataCard &&
     prev.removeWeatherCard === next.removeWeatherCard &&
-    prev.getUnitsThunk === next.getUnitsThunk
+    prev.getUnitsThunk === next.getUnitsThunk &&
+    prev.dragHandleProps === next.dragHandleProps
   );
 });
