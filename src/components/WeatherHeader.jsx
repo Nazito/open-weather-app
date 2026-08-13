@@ -3,17 +3,67 @@ import i18n from "../assets/i18next";
 import { useTranslation } from "react-i18next";
 import { geolocationAPI } from "../api/api";
 
+const formatSuggestion = (suggestion) => {
+  const secondary = [suggestion.admin1, suggestion.country]
+    .filter(Boolean)
+    .join(", ");
+
+  return {
+    primary: suggestion.name,
+    secondary,
+    label: [suggestion.name, secondary].filter(Boolean).join(", "),
+  };
+};
+
+const CYRILLIC_RE = /[\u0400-\u04FF]/;
+
+const normalizeAppLang = (lang) =>
+  (lang || "en").toLowerCase().split("-")[0];
+
+const hasCyrillic = (value) => CYRILLIC_RE.test(value);
+
+/** Keep only characters allowed for the selected UI language */
+const sanitizeInputByLang = (value, lang) => {
+  if (normalizeAppLang(lang) === "en") {
+    return value.replace(/[\u0400-\u04FF]/g, "");
+  }
+  return value;
+};
+
 const WeatherHeader = (props) => {
   const { t } = useTranslation();
 
-  const [lang, setLang] = useState(localStorage.getItem("i18nextLng"));
+  const [lang, setLang] = useState(
+    () => localStorage.getItem("i18nextLng") || i18n.language || "en"
+  );
   const [address, setAddress] = useState("");
   const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [inputError, setInputError] = useState("");
   const debounceRef = useRef(null);
   const searchBoxRef = useRef(null);
+  const errorTimerRef = useRef(null);
+
+  const showInputError = (message) => {
+    setInputError(message);
+    if (errorTimerRef.current) {
+      clearTimeout(errorTimerRef.current);
+    }
+    errorTimerRef.current = setTimeout(() => {
+      setInputError("");
+    }, 4000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (errorTimerRef.current) {
+        clearTimeout(errorTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -22,6 +72,7 @@ const WeatherHeader = (props) => {
         !searchBoxRef.current.contains(event.target)
       ) {
         setIsOpen(false);
+        setActiveIndex(-1);
       }
     };
 
@@ -37,17 +88,17 @@ const WeatherHeader = (props) => {
     if (!address.trim() || coordinates.lat !== null) {
       setSuggestions([]);
       setLoading(false);
+      setActiveIndex(-1);
       return;
     }
 
     setLoading(true);
+    setIsOpen(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        const response = await geolocationAPI.searchCities(
-          address,
-          localStorage.getItem("i18nextLng") || "en"
-        );
+        const response = await geolocationAPI.searchCities(address, lang);
         setSuggestions(response.data.results || []);
+        setActiveIndex(-1);
         setIsOpen(true);
       } catch (error) {
         console.error(error);
@@ -62,17 +113,35 @@ const WeatherHeader = (props) => {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [address, coordinates.lat]);
+  }, [address, coordinates.lat, lang]);
 
   const handleChangeAddress = (event) => {
+    const rawValue = event.target.value;
+
+    if (normalizeAppLang(lang) === "en" && hasCyrillic(rawValue)) {
+      const nextValue = sanitizeInputByLang(rawValue, lang);
+      setCoordinates({ lat: null, lng: null });
+      setAddress(nextValue);
+      showInputError(t("search.scriptError"));
+      return;
+    }
+
+    setInputError("");
     setCoordinates({ lat: null, lng: null });
-    setAddress(event.target.value);
+    setAddress(rawValue);
+  };
+
+  const handleClear = () => {
+    setAddress("");
+    setCoordinates({ lat: null, lng: null });
+    setSuggestions([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    setInputError("");
   };
 
   const handleSelectSuggestion = (suggestion) => {
-    const label = [suggestion.name, suggestion.admin1, suggestion.country]
-      .filter(Boolean)
-      .join(", ");
+    const { label } = formatSuggestion(suggestion);
 
     setAddress(label);
     setCoordinates({
@@ -81,6 +150,8 @@ const WeatherHeader = (props) => {
     });
     setSuggestions([]);
     setIsOpen(false);
+    setActiveIndex(-1);
+    setInputError("");
   };
 
   const handleAddWeather = async () => {
@@ -92,7 +163,7 @@ const WeatherHeader = (props) => {
       lat: coordinates.lat,
       lng: coordinates.lng,
       units: "metric",
-      lang: localStorage.getItem("i18nextLng"),
+      lang,
       id: Date.now(),
     };
 
@@ -100,9 +171,46 @@ const WeatherHeader = (props) => {
     paramsList.push(queryParams);
     localStorage.setItem("params", JSON.stringify(paramsList));
     await props.getWeatherDataThunk(queryParams);
-    setAddress("");
-    setCoordinates({ lat: null, lng: null });
-    setSuggestions([]);
+    handleClear();
+  };
+
+  const handleKeyDown = (event) => {
+    if (!isOpen || (!loading && suggestions.length === 0)) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleAddWeather();
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((prev) =>
+        prev < suggestions.length - 1 ? prev + 1 : 0
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((prev) =>
+        prev > 0 ? prev - 1 : suggestions.length - 1
+      );
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (activeIndex >= 0 && suggestions[activeIndex]) {
+        handleSelectSuggestion(suggestions[activeIndex]);
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+    }
   };
 
   const handleChangeLang = async (nextLang) => {
@@ -115,47 +223,130 @@ const WeatherHeader = (props) => {
     });
     localStorage.setItem("params", JSON.stringify(params));
 
+    if (normalizeAppLang(nextLang) === "en" && hasCyrillic(address)) {
+      setAddress(sanitizeInputByLang(address, nextLang));
+      setCoordinates({ lat: null, lng: null });
+      setSuggestions([]);
+      setIsOpen(false);
+      showInputError(i18n.getFixedT(nextLang)("search.scriptError"));
+      props.getWeatherDataListThunk(params);
+      return;
+    }
+
+    setInputError("");
+    setCoordinates({ lat: null, lng: null });
+
+    if (address.trim()) {
+      setIsOpen(true);
+    } else {
+      setSuggestions([]);
+      setIsOpen(false);
+    }
+
     props.getWeatherDataListThunk(params);
   };
+
+  const showDropdown =
+    isOpen && address.trim() && coordinates.lat === null;
 
   return (
     <header className="header">
       <div className="searchBox" ref={searchBoxRef}>
         <div className="searchBox__wrap">
-          <input
-            className="searchBox__Field"
-            value={address}
-            onChange={handleChangeAddress}
-            onFocus={() => suggestions.length > 0 && setIsOpen(true)}
-            placeholder={t("search.placeholder")}
-            autoComplete="off"
-          />
-          {isOpen && (loading || suggestions.length > 0) && (
-            <div className="searchBox__Autocomplite">
-              {loading ? <div>...loading</div> : null}
-              {suggestions.map((suggestion) => {
-                const label = [
-                  suggestion.name,
-                  suggestion.admin1,
-                  suggestion.country,
-                ]
-                  .filter(Boolean)
-                  .join(", ");
+          <div
+            className={`searchBox__control${
+              showDropdown ? " searchBox__control--open" : ""
+            }${inputError ? " searchBox__control--error" : ""}`}
+          >
+            <span className="searchBox__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.6" />
+                <path
+                  d="M16.2 16.2L20 20"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <input
+              className="searchBox__Field"
+              value={address}
+              onChange={handleChangeAddress}
+              onFocus={() => {
+                if (address.trim() && coordinates.lat === null) {
+                  setIsOpen(true);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={t("search.placeholder")}
+              autoComplete="off"
+              aria-autocomplete="list"
+              aria-expanded={showDropdown}
+              aria-invalid={Boolean(inputError)}
+            />
+            {address && (
+              <button
+                type="button"
+                className="searchBox__clear"
+                onClick={handleClear}
+                aria-label={t("search.clear")}
+              >
+                ×
+              </button>
+            )}
+          </div>
 
-                return (
-                  <div
-                    className="searchBox__Autocomplite_Suggestion"
-                    key={`${suggestion.id}-${suggestion.latitude}-${suggestion.longitude}`}
-                    onClick={() => handleSelectSuggestion(suggestion)}
-                    style={{ cursor: "pointer", backgroundColor: "#ffffff" }}
-                  >
-                    {label}
-                  </div>
-                );
-              })}
+          {inputError && (
+            <div className="searchBox__error" role="alert">
+              {inputError}
+            </div>
+          )}
+
+          {showDropdown && (
+            <div className="searchBox__Autocomplite" role="listbox">
+              {loading && (
+                <div className="searchBox__status">{t("search.loading")}</div>
+              )}
+
+              {!loading && suggestions.length === 0 && (
+                <div className="searchBox__status">{t("search.noResults")}</div>
+              )}
+
+              {!loading &&
+                suggestions.map((suggestion, index) => {
+                  const { primary, secondary } = formatSuggestion(suggestion);
+                  const isActive = index === activeIndex;
+
+                  return (
+                    <button
+                      type="button"
+                      className={`searchBox__Autocomplite_Suggestion${
+                        isActive
+                          ? " searchBox__Autocomplite_Suggestion--active"
+                          : ""
+                      }`}
+                      key={`${suggestion.id}-${suggestion.latitude}-${suggestion.longitude}`}
+                      onClick={() => handleSelectSuggestion(suggestion)}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      role="option"
+                      aria-selected={isActive}
+                    >
+                      <span className="searchBox__suggestionPrimary">
+                        {primary}
+                      </span>
+                      {secondary && (
+                        <span className="searchBox__suggestionSecondary">
+                          {secondary}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
             </div>
           )}
         </div>
+
         <button
           className="searchBox__Btn"
           onClick={handleAddWeather}

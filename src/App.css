@@ -261,63 +261,203 @@ select:-webkit-autofill {
 /* ======================== */
 .searchBox {
   display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .searchBox__wrap {
   position: relative;
-  margin-right: 20px;
+}
+
+.searchBox__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 320px;
+  height: 42px;
+  background: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0px 3px 6px #00000029;
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.searchBox__control:focus-within,
+.searchBox__control--open {
+  border-color: rgba(69, 157, 233, 0.55);
+  box-shadow: 0px 4px 14px rgba(69, 157, 233, 0.18);
+}
+
+.searchBox__control--error,
+.searchBox__control--error:focus-within {
+  border-color: #e57373;
+  box-shadow: 0px 4px 14px rgba(229, 115, 115, 0.2);
+}
+
+.searchBox__error {
+  margin-top: 8px;
+  max-width: 320px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: #c62828;
+  font-size: 12px;
+  line-height: 16px;
+  font-family: "Jost", sans-serif;
+  animation: searchDropdownIn 0.16s ease;
+}
+
+.searchBox__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12px;
+  color: #9aa0a6;
+  flex-shrink: 0;
 }
 
 .searchBox__Field {
-  width: 250px;
-  height: 40px;
+  width: 100%;
+  height: 100%;
   display: block;
-  padding: 0 10px;
-  background: #ffffff 0% 0% no-repeat padding-box;
-  box-shadow: 0px 3px 6px #00000029;
-  border-radius: 5px;
-  opacity: 1;
+  padding: 0 34px 0 10px;
+  background: transparent;
   border: none;
   outline: none;
   text-align: left;
-  font: normal normal normal 14px/20px;
-  letter-spacing: 0px;
-  color: #bcbcbc;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0;
+  color: #333333;
   font-family: "Jost", sans-serif;
+}
+
+.searchBox__Field::placeholder {
+  color: #b0b0b0;
+}
+
+.searchBox__clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #f0f0f0;
+  color: #777;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.searchBox__clear:hover {
+  background: #e4e4e4;
+  color: #444;
 }
 
 .searchBox__Autocomplite {
   position: absolute;
-  top: calc(100% + 10px);
-  width: 250px;
-  background: #ffffff 0% 0% no-repeat padding-box;
-  box-shadow: 0px 3px 6px #00000029;
-  opacity: 1;
-  z-index: 10;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+  animation: searchDropdownIn 0.16s ease;
+}
+
+@keyframes searchDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.searchBox__status {
+  padding: 12px 10px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #8a8a8a;
+  font-family: "Jost", sans-serif;
 }
 
 .searchBox__Autocomplite_Suggestion {
   width: 100%;
-  padding: 3px;
-  font: normal normal normal 14px/20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Jost", sans-serif;
+  transition: background-color 0.15s ease;
 }
 
-.searchBox__Autocomplite_Suggestion:hover {
-  background: #f2f2f2 !important;
+.searchBox__Autocomplite_Suggestion:hover,
+.searchBox__Autocomplite_Suggestion--active {
+  background: #f3f8fd;
+}
+
+.searchBox__suggestionPrimary {
+  font-size: 14px;
+  line-height: 18px;
+  color: #2f2f2f;
+  font-weight: 500;
+}
+
+.searchBox__suggestionSecondary {
+  font-size: 12px;
+  line-height: 16px;
+  color: #8c8c8c;
 }
 
 .searchBox__Btn {
-  width: 112px;
-  height: 40px;
+  min-width: 112px;
+  height: 42px;
+  padding: 0 18px;
   color: #fff;
-  background: #459de9 0% 0% no-repeat padding-box;
+  background: #459de9;
   box-shadow: 0px 3px 6px #00000029;
-  border-radius: 5px;
-  opacity: 1;
+  border-radius: 8px;
   border: none;
   outline: none;
-  font: normal normal normal 14px/20px;
+  font-size: 14px;
+  line-height: 20px;
   font-family: "Jost", sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+
+.searchBox__Btn:hover:not(:disabled) {
+  background: #348fdc;
+}
+
+.searchBox__Btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.searchBox__Btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 /* ======================== */
 .weatherCardItem {

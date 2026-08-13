@@ -12,6 +12,14 @@ const reverseClient = axios.create({
   baseURL: "https://api.bigdatacloud.net/data/",
 });
 
+/** App langs (en/ru/ua) → API locale codes */
+export const toApiLang = (lang) => {
+  const normalized = (lang || "en").toLowerCase().split("-")[0];
+  if (normalized === "ua" || normalized === "uk") return "uk";
+  if (normalized === "ru") return "ru";
+  return "en";
+};
+
 const wmoToOwIcon = (code) => {
   if (code === 0) return "01d";
   if (code === 1) return "02d";
@@ -94,7 +102,7 @@ export const geolocationAPI = {
       params: {
         name: name.trim(),
         count: 6,
-        language: lang,
+        language: toApiLang(lang),
         format: "json",
       },
     });
@@ -106,7 +114,7 @@ export const geolocationAPI = {
         params: {
           latitude: lat,
           longitude: lng,
-          localityLanguage: lang,
+          localityLanguage: toApiLang(lang),
         },
       })
       .then((response) => {
