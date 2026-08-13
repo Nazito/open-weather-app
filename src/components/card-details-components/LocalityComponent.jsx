@@ -1,8 +1,8 @@
 import React from "react";
 
-const LocalityComponent = (props) => {
-  const city = props.locality?.city || "";
-  const country = props.locality?.country || "";
+const LocalityComponent = ({ locality }) => {
+  const city = (locality && locality.city) || "";
+  const country = (locality && locality.country) || "";
 
   return (
     <div className="weatherCardItem__Top_City">
@@ -12,4 +12,4 @@ const LocalityComponent = (props) => {
   );
 };
 
-export default LocalityComponent;
+export default React.memo(LocalityComponent);

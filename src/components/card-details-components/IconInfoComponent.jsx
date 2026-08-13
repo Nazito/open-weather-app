@@ -19,4 +19,4 @@ const IconInfoComponent = (props) => {
   );
 };
 
-export default IconInfoComponent;
+export default React.memo(IconInfoComponent);

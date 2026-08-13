@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import i18n from "../assets/i18next";
 import { useTranslation } from "react-i18next";
 import { geolocationAPI } from "../api/api";
+import { hasDuplicateLocation } from "../utils/location";
 
 const formatSuggestion = (suggestion) => {
   const secondary = [suggestion.admin1, suggestion.country]
@@ -15,20 +16,8 @@ const formatSuggestion = (suggestion) => {
   };
 };
 
-const CYRILLIC_RE = /[\u0400-\u04FF]/;
-
 const normalizeAppLang = (lang) =>
   (lang || "en").toLowerCase().split("-")[0];
-
-const hasCyrillic = (value) => CYRILLIC_RE.test(value);
-
-/** Keep only characters allowed for the selected UI language */
-const sanitizeInputByLang = (value, lang) => {
-  if (normalizeAppLang(lang) === "en") {
-    return value.replace(/[\u0400-\u04FF]/g, "");
-  }
-  return value;
-};
 
 const WeatherHeader = (props) => {
   const { t } = useTranslation();
@@ -42,28 +31,10 @@ const WeatherHeader = (props) => {
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [inputError, setInputError] = useState("");
+  const [searchError, setSearchError] = useState("");
   const debounceRef = useRef(null);
   const searchBoxRef = useRef(null);
-  const errorTimerRef = useRef(null);
-
-  const showInputError = (message) => {
-    setInputError(message);
-    if (errorTimerRef.current) {
-      clearTimeout(errorTimerRef.current);
-    }
-    errorTimerRef.current = setTimeout(() => {
-      setInputError("");
-    }, 4000);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (errorTimerRef.current) {
-        clearTimeout(errorTimerRef.current);
-      }
-    };
-  }, []);
+  const searchRequestId = useRef(0);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -89,46 +60,55 @@ const WeatherHeader = (props) => {
       setSuggestions([]);
       setLoading(false);
       setActiveIndex(-1);
+      setSearchError("");
       return;
     }
 
     setLoading(true);
     setIsOpen(true);
+    setSearchError("");
+    const requestId = ++searchRequestId.current;
+
     debounceRef.current = setTimeout(async () => {
       try {
         const response = await geolocationAPI.searchCities(address, lang);
-        setSuggestions(response.data.results || []);
+        if (requestId !== searchRequestId.current) return;
+
+        const nextSuggestions = response.data.results || [];
+        setSuggestions(nextSuggestions);
         setActiveIndex(-1);
         setIsOpen(true);
+        setSearchError(
+          nextSuggestions.length === 0 ? t("search.noResults") : ""
+        );
       } catch (error) {
+        if (requestId !== searchRequestId.current) return;
         console.error(error);
         setSuggestions([]);
+        setSearchError(t("search.failed"));
+        if (props.showToast) {
+          props.showToast({
+            type: "error",
+            message: t("search.failed"),
+          });
+        }
       } finally {
-        setLoading(false);
+        if (requestId === searchRequestId.current) {
+          setLoading(false);
+        }
       }
-    }, 300);
+    }, 200);
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [address, coordinates.lat, lang]);
+  }, [address, coordinates.lat, lang, t, props.showToast]);
 
   const handleChangeAddress = (event) => {
-    const rawValue = event.target.value;
-
-    if (normalizeAppLang(lang) === "en" && hasCyrillic(rawValue)) {
-      const nextValue = sanitizeInputByLang(rawValue, lang);
-      setCoordinates({ lat: null, lng: null });
-      setAddress(nextValue);
-      showInputError(t("search.scriptError"));
-      return;
-    }
-
-    setInputError("");
     setCoordinates({ lat: null, lng: null });
-    setAddress(rawValue);
+    setAddress(event.target.value);
   };
 
   const handleClear = () => {
@@ -137,7 +117,7 @@ const WeatherHeader = (props) => {
     setSuggestions([]);
     setIsOpen(false);
     setActiveIndex(-1);
-    setInputError("");
+    setSearchError("");
   };
 
   const handleSelectSuggestion = (suggestion) => {
@@ -151,11 +131,23 @@ const WeatherHeader = (props) => {
     setSuggestions([]);
     setIsOpen(false);
     setActiveIndex(-1);
-    setInputError("");
   };
 
   const handleAddWeather = async () => {
     if (coordinates.lat == null || coordinates.lng == null) {
+      return;
+    }
+
+    const paramsList = JSON.parse(localStorage.getItem("params")) || [];
+
+    if (hasDuplicateLocation(paramsList, coordinates.lat, coordinates.lng)) {
+      if (props.showToast) {
+        props.showToast({
+          type: "info",
+          message: t("search.duplicateCity"),
+        });
+      }
+      handleClear();
       return;
     }
 
@@ -167,8 +159,7 @@ const WeatherHeader = (props) => {
       id: Date.now(),
     };
 
-    const paramsList = JSON.parse(localStorage.getItem("params")) || [];
-    paramsList.push(queryParams);
+    paramsList.unshift(queryParams);
     localStorage.setItem("params", JSON.stringify(paramsList));
     await props.getWeatherDataThunk(queryParams);
     handleClear();
@@ -223,17 +214,6 @@ const WeatherHeader = (props) => {
     });
     localStorage.setItem("params", JSON.stringify(params));
 
-    if (normalizeAppLang(nextLang) === "en" && hasCyrillic(address)) {
-      setAddress(sanitizeInputByLang(address, nextLang));
-      setCoordinates({ lat: null, lng: null });
-      setSuggestions([]);
-      setIsOpen(false);
-      showInputError(i18n.getFixedT(nextLang)("search.scriptError"));
-      props.getWeatherDataListThunk(params);
-      return;
-    }
-
-    setInputError("");
     setCoordinates({ lat: null, lng: null });
 
     if (address.trim()) {
@@ -246,8 +226,7 @@ const WeatherHeader = (props) => {
     props.getWeatherDataListThunk(params);
   };
 
-  const showDropdown =
-    isOpen && address.trim() && coordinates.lat === null;
+  const showDropdown = isOpen && address.trim() && coordinates.lat === null;
 
   return (
     <header className="header">
@@ -273,11 +252,17 @@ const WeatherHeader = (props) => {
           <div
             className={`searchBox__control${
               showDropdown ? " searchBox__control--open" : ""
-            }${inputError ? " searchBox__control--error" : ""}`}
+            }`}
           >
             <span className="searchBox__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.6" />
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="6.5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
                 <path
                   d="M16.2 16.2L20 20"
                   stroke="currentColor"
@@ -299,8 +284,6 @@ const WeatherHeader = (props) => {
               placeholder={t("search.placeholder")}
               autoComplete="off"
               aria-autocomplete="list"
-              aria-expanded={showDropdown}
-              aria-invalid={Boolean(inputError)}
             />
             {address && (
               <button
@@ -314,23 +297,18 @@ const WeatherHeader = (props) => {
             )}
           </div>
 
-          {inputError && (
-            <div className="searchBox__error" role="alert">
-              {inputError}
-            </div>
-          )}
-
           {showDropdown && (
             <div className="searchBox__Autocomplite" role="listbox">
               {loading && (
                 <div className="searchBox__status">{t("search.loading")}</div>
               )}
 
-              {!loading && suggestions.length === 0 && (
-                <div className="searchBox__status">{t("search.noResults")}</div>
+              {!loading && searchError && (
+                <div className="searchBox__status">{searchError}</div>
               )}
 
               {!loading &&
+                !searchError &&
                 suggestions.map((suggestion, index) => {
                   const { primary, secondary } = formatSuggestion(suggestion);
                   const isActive = index === activeIndex;
@@ -344,7 +322,10 @@ const WeatherHeader = (props) => {
                           : ""
                       }`}
                       key={`${suggestion.id}-${suggestion.latitude}-${suggestion.longitude}`}
-                      onClick={() => handleSelectSuggestion(suggestion)}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleSelectSuggestion(suggestion);
+                      }}
                       onMouseEnter={() => setActiveIndex(index)}
                       role="option"
                       aria-selected={isActive}
@@ -373,19 +354,62 @@ const WeatherHeader = (props) => {
         </button>
       </div>
 
-      <div className="langMenu" role="group" aria-label={t("brand.lang")}>
-        {["en", "ua", "ru"].map((code) => (
-          <button
-            key={code}
-            type="button"
-            className={`langItem${
-              normalizeAppLang(lang) === code ? " langItem--active" : ""
-            }`}
-            onClick={() => handleChangeLang(code)}
+      <div className="header__aside">
+        <button
+          type="button"
+          className="geoBtn"
+          onClick={props.onUseMyLocation}
+          disabled={
+            props.hasUserLocation || props.geoStatus === "loading"
+          }
+          title={
+            props.hasUserLocation
+              ? t("geo.alreadyAdded")
+              : t("geo.useMyLocation")
+          }
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            aria-hidden="true"
           >
-            {code}
-          </button>
-        ))}
+            <path
+              d="M12 21s6-5.3 6-10a6 6 0 1 0-12 0c0 4.7 6 10 6 10Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+            <circle
+              cx="12"
+              cy="11"
+              r="2.2"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            />
+          </svg>
+          <span>
+            {props.geoStatus === "loading"
+              ? t("geo.loadingShort")
+              : t("geo.useMyLocation")}
+          </span>
+        </button>
+
+        <div className="langMenu" role="group" aria-label={t("brand.lang")}>
+          {["en", "ua", "ru"].map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={`langItem${
+                normalizeAppLang(lang) === code ? " langItem--active" : ""
+              }`}
+              onClick={() => handleChangeLang(code)}
+            >
+              {code}
+            </button>
+          ))}
+        </div>
       </div>
     </header>
   );

@@ -12,6 +12,105 @@ const reverseClient = axios.create({
   baseURL: "https://api.bigdatacloud.net/data/",
 });
 
+const normalizeNominatimResults = (items = []) =>
+  items.map((item) => {
+    const address = item.address || {};
+    return {
+      id: item.place_id,
+      name:
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        item.name ||
+        (item.display_name || "").split(",")[0],
+      latitude: Number(item.lat),
+      longitude: Number(item.lon),
+      admin1: address.state || address.region || address.county || "",
+      country: address.country || "",
+    };
+  });
+
+const normalizePhotonResults = (features = []) =>
+  features.map((feature, index) => {
+    const props = feature.properties || {};
+    const coords = (feature.geometry && feature.geometry.coordinates) || [];
+    return {
+      id: props.osm_id || `${props.name || "place"}-${index}`,
+      name: props.name || props.city || props.street || "Unknown",
+      latitude: Number(coords[1]),
+      longitude: Number(coords[0]),
+      admin1: props.state || props.county || "",
+      country: props.country || "",
+    };
+  });
+
+const searchCitiesPhoton = (query, lang) =>
+  axios
+    .get("https://photon.komoot.io/api/", {
+      params: {
+        q: query,
+        lang: lang === "uk" ? "en" : lang,
+        limit: 6,
+      },
+    })
+    .then((response) => ({
+      data: {
+        results: normalizePhotonResults(
+          (response.data && response.data.features) || []
+        ).filter(
+          (item) =>
+            Number.isFinite(item.latitude) && Number.isFinite(item.longitude)
+        ),
+      },
+    }));
+
+const searchCitiesNominatim = (query, lang) =>
+  axios
+    .get("https://nominatim.openstreetmap.org/search", {
+      params: {
+        q: query,
+        format: "json",
+        addressdetails: 1,
+        limit: 6,
+        "accept-language": lang,
+      },
+    })
+    .then((response) => ({
+      data: {
+        results: normalizeNominatimResults(response.data || []),
+      },
+    }));
+
+const searchCitiesWithFallback = async (query, apiLang) => {
+  try {
+    const response = await geoClient.get("search", {
+      params: {
+        name: query,
+        count: 6,
+        language: apiLang,
+        format: "json",
+      },
+    });
+    const results = response.data && response.data.results;
+    if (results && results.length > 0) {
+      return { data: { results } };
+    }
+  } catch (error) {
+    // continue to fallbacks
+  }
+
+  try {
+    const photon = await searchCitiesPhoton(query, apiLang);
+    if (photon.data.results.length > 0) {
+      return photon;
+    }
+  } catch (error) {
+    // continue
+  }
+
+  return searchCitiesNominatim(query, apiLang);
+};
 /** App langs (en/ru/ua) → API locale codes */
 export const toApiLang = (lang) => {
   const normalized = (lang || "en").toLowerCase().split("-")[0];
@@ -98,14 +197,9 @@ export const geolocationAPI = {
       return Promise.resolve({ data: { results: [] } });
     }
 
-    return geoClient.get("search", {
-      params: {
-        name: name.trim(),
-        count: 6,
-        language: toApiLang(lang),
-        format: "json",
-      },
-    });
+    const query = name.trim();
+    const apiLang = toApiLang(lang);
+    return searchCitiesWithFallback(query, apiLang);
   },
 
   getLocationCity(lat, lng, lang = "en") {
@@ -130,5 +224,37 @@ export const geolocationAPI = {
           },
         };
       });
+  },
+
+  /** Approximate location by public IP when browser geolocation fails */
+  getLocationByIp() {
+    return axios
+      .get("https://ipwho.is/")
+      .then((response) => {
+        const data = response.data;
+        if (!data || data.success === false || data.latitude == null) {
+          throw new Error("IP geolocation failed");
+        }
+        return {
+          lat: Number(data.latitude),
+          lng: Number(data.longitude),
+          city: data.city || "",
+          country: data.country_code || data.country || "",
+        };
+      })
+      .catch(() =>
+        axios.get("https://get.geojs.io/v1/ip/geo.json").then((response) => {
+          const data = response.data;
+          if (!data || data.latitude == null) {
+            throw new Error("IP geolocation failed");
+          }
+          return {
+            lat: Number(data.latitude),
+            lng: Number(data.longitude),
+            city: data.city || "",
+            country: data.country_code || data.country || "",
+          };
+        })
+      );
   },
 };

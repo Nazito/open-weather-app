@@ -20,7 +20,7 @@ const weatherReducer = (state = initialState, action) => {
     case ADD_WEATHER_ITEM:
       return {
         ...state,
-        weatherList: [...state.weatherList, action.payload],
+        weatherList: [action.payload, ...state.weatherList],
       };
 
     case REMOVE_WEATHER_CARD:
@@ -77,9 +77,20 @@ export const getWeatherDataListThunk = (paramsList) => async (dispach) => {
   }
 
   try {
-    const weatherDataList = await Promise.all(
+    const settled = await Promise.allSettled(
       paramsList.map((params) => getWeatherData(params))
     );
+
+    const weatherDataList = settled
+      .map((result, index) => {
+        if (result.status === "fulfilled") {
+          return result.value;
+        }
+        console.error("Failed to load weather card:", paramsList[index], result.reason);
+        return null;
+      })
+      .filter(Boolean);
+
     dispach(setWeatherList(weatherDataList));
   } catch (error) {
     console.error(error);
@@ -96,18 +107,26 @@ export const getWeatherDataThunk = (params) => async (dispach) => {
   }
 };
 
-const getWeatherData = (params) => {
-  return Promise.all([
+const getWeatherData = async (params) => {
+  const [responseWeather, responseGeo] = await Promise.all([
     weatherAPI.getWeather(params.lat, params.lng, params.units),
-    geolocationAPI.getLocationCity(params.lat, params.lng, params.lang),
-  ]).then(([responseWeather, responseGeo]) => {
-    return {
-      weatherData: responseWeather.data,
-      geoData: responseGeo.data,
-      id: params.id,
-      units: params.units,
-    };
-  });
+    geolocationAPI.getLocationCity(params.lat, params.lng, params.lang).catch(
+      () => ({
+        data: {
+          city: params.isUserLocation ? "My location" : "Unknown",
+          country: "",
+        },
+      })
+    ),
+  ]);
+
+  return {
+    weatherData: responseWeather.data,
+    geoData: responseGeo.data,
+    id: params.id,
+    units: params.units,
+    isUserLocation: Boolean(params.isUserLocation),
+  };
 };
 
 export const getUnitsThunk = (lat, lng, units, id, lang) => {

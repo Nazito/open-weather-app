@@ -1,21 +1,18 @@
-import React from "react";
+import React, { memo } from "react";
 
-const HoursesComponent = (props) => {
+const HoursesComponent = ({ hourses = [] }) => {
   return (
     <div className="hourses">
-      {props.hourses &&
-        props.hourses.map((hours, index) => {
-          if (index % 6 === 0) {
-            return (
-              <div key={index} className="hours">
-                {hours}
-              </div>
-            );
-          }
-          return null;
-        })}
+      {hourses.map((hours, index) => {
+        if (index % 6 !== 0) return null;
+        return (
+          <div key={`${hours}-${index}`} className="hours">
+            {hours}
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-export default HoursesComponent;
+export default memo(HoursesComponent);
