@@ -16,6 +16,8 @@
   },
   "emptyList": "No cities yet",
   "emptyListHint": "Search for a city above or allow geolocation to see the weather.",
+  "dragCard": "Drag to reorder",
+  "removeCard": "Remove card",
   "geo": {
     "loadingTitle": "Detecting your location",
     "loadingText": "Please allow location access in the browser prompt.",

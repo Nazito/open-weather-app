@@ -12,7 +12,7 @@ const buildPalette = (midVal) => {
   if (midVal > 25) return "rgba(141, 141, 141, .3)";
   if (midVal >= 10) return "#C5C5C5";
   if (midVal > 0) return "#F2F2F2";
-  if (midVal <= 0 && midVal > -10) return "#FFF1FE";
+  if (midVal <= 0 && midVal > -10) return "#F3F8FD";
   if (midVal <= -10 && midVal > -20) return "#F1F2FF";
   return "rgba(69, 157, 233, .3)";
 };

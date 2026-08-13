@@ -6,6 +6,7 @@ import {
   removeWeatherCard,
   getUnitsThunk,
   getWeatherDataListThunk,
+  reorderWeatherCards,
 } from "./redux/weather-reducer";
 import WeatherList from "./components/WeatherList";
 import WeatherHeader from "./components/WeatherHeader";
@@ -304,6 +305,7 @@ const WeatherApp = (props) => {
               weatherList={props.weatherList}
               removeWeatherCard={props.removeWeatherCard}
               getUnitsThunk={props.getUnitsThunk}
+              reorderWeatherCards={props.reorderWeatherCards}
             />
           </div>
         </main>
@@ -325,4 +327,5 @@ export default connect(mapStateToProps, {
   removeWeatherCard,
   getUnitsThunk,
   getWeatherDataThunk,
+  reorderWeatherCards,
 })(WeatherApp);
