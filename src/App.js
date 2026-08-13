@@ -12,40 +12,35 @@ import WeatherList from "./components/WeatherList";
 import WeatherHeader from "./components/WeatherHeader";
 
 const WeatherApp = (props) => {
-  console.log("render");
   useEffect(() => {
-    // localStorage.setItem('userLocation', JSON.stringify(null))
-    let userLocationData = JSON.parse(localStorage.getItem("userLocation"));
-    let params = JSON.parse(localStorage.getItem("params")) || [];
-    let userGeoParams;
+    const userLocationData = JSON.parse(localStorage.getItem("userLocation"));
+    const params = JSON.parse(localStorage.getItem("params")) || [];
+
     if (userLocationData === null && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        userGeoParams = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          units: "metric",
-          lang: localStorage.getItem("i18nextLng"),
-          id: Date.now(),
-        };
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userGeoParams = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            units: "metric",
+            lang: localStorage.getItem("i18nextLng"),
+            id: Date.now(),
+          };
 
-        params.push(userGeoParams);
-        localStorage.setItem("params", JSON.stringify(params));
-        localStorage.setItem("userLocation", JSON.stringify(true));
-
-        props.getWeatherDataListThunk(params);
-      });
+          const nextParams = [...params, userGeoParams];
+          localStorage.setItem("params", JSON.stringify(nextParams));
+          localStorage.setItem("userLocation", JSON.stringify(true));
+          props.getWeatherDataListThunk(nextParams);
+        },
+        () => {
+          localStorage.setItem("userLocation", JSON.stringify(false));
+          props.getWeatherDataListThunk(params);
+        }
+      );
     } else {
-      if (userGeoParams) {
-        params.push(userGeoParams);
-        localStorage.setItem("params", JSON.stringify(params));
-      }
-
       props.getWeatherDataListThunk(params);
-
-      // params.reduce((promise, item) => {
-      //   return promise.then(() => props.getWeatherDataThunk(item))
-      // }, Promise.resolve());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

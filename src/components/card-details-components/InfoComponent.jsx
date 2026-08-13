@@ -21,7 +21,7 @@ const InfoComponent = (props) => {
       </div>
       <div className="pressure">
         <span className="title">{t("pressure")}</span>
-        <span className="val">{pressure}Pa</span>
+        <span className="val">{pressure} hPa</span>
       </div>
     </>
   );

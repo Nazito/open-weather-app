@@ -1,25 +1,13 @@
 import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import WeatherCardItem from "./WeatherCardItem";
 
-
-
 const WeatherList = (props) => {
+  const { t } = useTranslation();
 
-    // let [data, setData] = useState([])
-
-    // useEffect(() => {
-    //     setData(props.weatherList)
-    // },[]);
-
-    
-
-    if(props.weatherList.length === 0){
-        return (
-            <div>Загрузите файлы</div>
-        )
-    }
+  if (props.weatherList.length === 0) {
+    return <div>{t("emptyList")}</div>;
+  }
 
   return (
         <div className="grid">

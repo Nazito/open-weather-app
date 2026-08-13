@@ -87,14 +87,15 @@ const WeatherCardItem = (props) => {
       currentItem[0].lat,
       currentItem[0].lng,
       units,
-      currentItem[0].id
+      currentItem[0].id,
+      currentItem[0].lang
     );
   };
 
   return (
     <div className="weatherCardItem">
       <div className="weatherCardItem__Top">
-        <LocalityComponent locality={props.dataCard.geoData.results} />
+        <LocalityComponent locality={props.dataCard.geoData} />
         <IconInfoComponent
           iconInfo={props.dataCard.weatherData.current.weather[0]}
         />
@@ -146,6 +147,7 @@ const WeatherCardItem = (props) => {
           </div>
           <FeelsLikeComponent
             temp={props.dataCard.weatherData.current.feels_like}
+            units={props.dataCard.units}
           />
         </div>
         <div className="weatherCardItem__Bottom_Right">

@@ -1,29 +1,94 @@
-import React from "react";
-import { useState } from "react";
-
-import PlacesAutocomplete from "react-places-autocomplete";
-import { geocodeByAddress, getLatLng } from "react-places-autocomplete";
+import React, { useEffect, useRef, useState } from "react";
 import i18n from "../assets/i18next";
 import { useTranslation } from "react-i18next";
+import { geolocationAPI } from "../api/api";
 
 const WeatherHeader = (props) => {
   const { t } = useTranslation();
 
-  let [lang, setLang] = useState(localStorage.getItem("i18nextLng"));
-  let [address, setAddress] = useState("");
-  let [coordinates, setCoordinates] = useState({ lat: null, lng: null });
+  const [lang, setLang] = useState(localStorage.getItem("i18nextLng"));
+  const [address, setAddress] = useState("");
+  const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const debounceRef = useRef(null);
+  const searchBoxRef = useRef(null);
 
-  const handleSelectAddress = async (value) => {
-    let results = await geocodeByAddress(value);
-    let latLng = await getLatLng(results[0]);
-    setAddress(value);
-    setCoordinates(latLng);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchBoxRef.current &&
+        !searchBoxRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    if (!address.trim() || coordinates.lat !== null) {
+      setSuggestions([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const response = await geolocationAPI.searchCities(
+          address,
+          localStorage.getItem("i18nextLng") || "en"
+        );
+        setSuggestions(response.data.results || []);
+        setIsOpen(true);
+      } catch (error) {
+        console.error(error);
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [address, coordinates.lat]);
+
+  const handleChangeAddress = (event) => {
+    setCoordinates({ lat: null, lng: null });
+    setAddress(event.target.value);
   };
-  const handleChangeAddress = (value) => {
-    setAddress(value);
+
+  const handleSelectSuggestion = (suggestion) => {
+    const label = [suggestion.name, suggestion.admin1, suggestion.country]
+      .filter(Boolean)
+      .join(", ");
+
+    setAddress(label);
+    setCoordinates({
+      lat: suggestion.latitude,
+      lng: suggestion.longitude,
+    });
+    setSuggestions([]);
+    setIsOpen(false);
   };
+
   const handleAddWeather = async () => {
-    let queryParams = {
+    if (coordinates.lat == null || coordinates.lng == null) {
+      return;
+    }
+
+    const queryParams = {
       lat: coordinates.lat,
       lng: coordinates.lng,
       units: "metric",
@@ -31,20 +96,22 @@ const WeatherHeader = (props) => {
       id: Date.now(),
     };
 
-    let paramsList = JSON.parse(localStorage.getItem("params"));
+    const paramsList = JSON.parse(localStorage.getItem("params")) || [];
     paramsList.push(queryParams);
     localStorage.setItem("params", JSON.stringify(paramsList));
     await props.getWeatherDataThunk(queryParams);
     setAddress("");
+    setCoordinates({ lat: null, lng: null });
+    setSuggestions([]);
   };
 
-  const handleChangeLang = async (lang) => {
-    i18n.changeLanguage(lang);
-    setLang(lang);
+  const handleChangeLang = async (nextLang) => {
+    i18n.changeLanguage(nextLang);
+    setLang(nextLang);
 
-    let params = JSON.parse(localStorage.getItem("params"));
+    const params = JSON.parse(localStorage.getItem("params")) || [];
     params.forEach((item) => {
-      item.lang = lang;
+      item.lang = nextLang;
     });
     localStorage.setItem("params", JSON.stringify(params));
 
@@ -53,50 +120,47 @@ const WeatherHeader = (props) => {
 
   return (
     <header className="header">
-      <div className="searchBox">
-        <PlacesAutocomplete
-          value={address}
-          onChange={handleChangeAddress}
-          onSelect={handleSelectAddress}
-        >
-          {({
-            getInputProps,
-            suggestions,
-            getSuggestionItemProps,
-            loading,
-          }) => {
-            return (
-              <div className="searchBox__wrap">
-                <input
-                  className="searchBox__Field"
-                  {...getInputProps({ placeholder: "City name..." })}
-                />
-                <div className="searchBox__Autocomplite">
-                  {/* <div>lat : {coordinates.lat}</div>
-                                <div>lng : {coordinates.lng}</div> */}
+      <div className="searchBox" ref={searchBoxRef}>
+        <div className="searchBox__wrap">
+          <input
+            className="searchBox__Field"
+            value={address}
+            onChange={handleChangeAddress}
+            onFocus={() => suggestions.length > 0 && setIsOpen(true)}
+            placeholder={t("search.placeholder")}
+            autoComplete="off"
+          />
+          {isOpen && (loading || suggestions.length > 0) && (
+            <div className="searchBox__Autocomplite">
+              {loading ? <div>...loading</div> : null}
+              {suggestions.map((suggestion) => {
+                const label = [
+                  suggestion.name,
+                  suggestion.admin1,
+                  suggestion.country,
+                ]
+                  .filter(Boolean)
+                  .join(", ");
 
-                  {loading ? <div>...loading</div> : null}
-                  {suggestions.map((suggestion) => {
-                    const style = suggestion.active
-                      ? { backgroundColor: "#F2F2F2", cursor: "pointer" }
-                      : { backgroundColor: "#ffffff", cursor: "pointer" };
-                    console.log(suggestion);
-                    return (
-                      <div
-                        className="searchBox__Autocomplite_Suggestion"
-                        key={suggestion.placeId}
-                        {...getSuggestionItemProps(suggestion, { style })}
-                      >
-                        {suggestion.description}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          }}
-        </PlacesAutocomplete>
-        <button className="searchBox__Btn" onClick={handleAddWeather}>
+                return (
+                  <div
+                    className="searchBox__Autocomplite_Suggestion"
+                    key={`${suggestion.id}-${suggestion.latitude}-${suggestion.longitude}`}
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    style={{ cursor: "pointer", backgroundColor: "#ffffff" }}
+                  >
+                    {label}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <button
+          className="searchBox__Btn"
+          onClick={handleAddWeather}
+          disabled={coordinates.lat == null}
+        >
           {t("search.btn")}
         </button>
       </div>

@@ -302,6 +302,10 @@ select:-webkit-autofill {
   font: normal normal normal 14px/20px;
 }
 
+.searchBox__Autocomplite_Suggestion:hover {
+  background: #f2f2f2 !important;
+}
+
 .searchBox__Btn {
   width: 112px;
   height: 40px;

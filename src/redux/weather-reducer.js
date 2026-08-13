@@ -1,5 +1,4 @@
-import { weatherAPI } from "../api/api";
-import { geolocationAPI } from "../api/api";
+import { weatherAPI, geolocationAPI } from "../api/api";
 
 const SET_UNITS = "SET_UNITS";
 const REMOVE_WEATHER_CARD = "REMOVE_WEATHER_CARD";
@@ -72,23 +71,34 @@ export const removeWeatherCard = (payload) => ({
 });
 
 export const getWeatherDataListThunk = (paramsList) => async (dispach) => {
-  const weatherDataList = await Promise.all(
-    paramsList.map((params) => {
-      return getWeatherData(params);
-    })
-  );
+  if (!paramsList || paramsList.length === 0) {
+    dispach(setWeatherList([]));
+    return;
+  }
 
-  dispach(setWeatherList(weatherDataList));
+  try {
+    const weatherDataList = await Promise.all(
+      paramsList.map((params) => getWeatherData(params))
+    );
+    dispach(setWeatherList(weatherDataList));
+  } catch (error) {
+    console.error(error);
+    dispach(setWeatherList([]));
+  }
 };
 
 export const getWeatherDataThunk = (params) => async (dispach) => {
-  const weatherData = await getWeatherData(params);
-  dispach(addWeatherItem(weatherData));
+  try {
+    const weatherData = await getWeatherData(params);
+    dispach(addWeatherItem(weatherData));
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 const getWeatherData = (params) => {
   return Promise.all([
-    weatherAPI.getWeather(params.lat, params.lng, params.units, params.lang),
+    weatherAPI.getWeather(params.lat, params.lng, params.units),
     geolocationAPI.getLocationCity(params.lat, params.lng, params.lang),
   ]).then(([responseWeather, responseGeo]) => {
     return {
@@ -100,11 +110,11 @@ const getWeatherData = (params) => {
   });
 };
 
-export const getUnitsThunk = (lat, lng, units, id) => {
+export const getUnitsThunk = (lat, lng, units, id, lang) => {
   return async (dispach) => {
     try {
       let responseWeather = await weatherAPI.getWeather(lat, lng, units);
-      let responseGeo = await geolocationAPI.getLocationCity(lat, lng);
+      let responseGeo = await geolocationAPI.getLocationCity(lat, lng, lang);
       dispach(
         setUnitsCard({
           weatherData: responseWeather.data,
@@ -114,7 +124,7 @@ export const getUnitsThunk = (lat, lng, units, id) => {
         })
       );
     } catch (e) {
-      console.log(e.response.data.message);
+      console.error(e);
     }
   };
 };
