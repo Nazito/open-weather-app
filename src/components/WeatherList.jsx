@@ -16,13 +16,6 @@ const WeatherList = (props) => {
               strokeWidth="1.6"
               strokeLinejoin="round"
             />
-            <path
-              d="M8 19.5h8"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              opacity="0.45"
-            />
           </svg>
         </span>
         <h2 className="emptyState__title">{t("emptyList")}</h2>

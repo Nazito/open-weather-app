@@ -1,158 +1,138 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
-const ChartComponent = (props) => {
-  let [hourses, setHourses] = useState("");
-  let [temp, setTemp] = useState("");
-  let [tempMin, setTempMin] = useState("");
-  let [tempMax, setTempMax] = useState("");
-  let [palette, setPalette] = useState("");
+const formatHour = (timestamp) => {
+  const formatTime = (n) => (n < 10 ? `0${n}` : `${n}`);
+  const date = new Date(timestamp * 1000);
+  return `${formatTime(date.getHours())}:${formatTime(date.getMinutes())}`;
+};
 
-  useEffect(() => {
-    let tempForMax = props.temp.map((temp, index) => Math.round(temp.temp));
-    let maxVal = Math.max(...tempForMax) + 3;
-    setTempMax(maxVal);
+const buildPalette = (midVal) => {
+  if (midVal > 25) return "rgba(141, 141, 141, .3)";
+  if (midVal >= 10) return "#C5C5C5";
+  if (midVal > 0) return "#F2F2F2";
+  if (midVal <= 0 && midVal > -10) return "#FFF1FE";
+  if (midVal <= -10 && midVal > -20) return "#F1F2FF";
+  return "rgba(69, 157, 233, .3)";
+};
 
-    let tempForMin = props.temp.map((temp, index) => Math.round(temp.temp));
-    let minVal = Math.min(...tempForMin) - 3;
-    setTempMin(minVal);
-
-    let temp = props.temp.map(
-      (temp, index) => index % 5 === 0 && Math.round(temp.temp)
-    );
-    let tempArr = temp.filter((item) => item);
-    setTemp(tempArr);
-
-    let hourses = props.hourses.map((hours, index) => index % 6 === 0 && hours);
-    let hoursesArr = hourses.filter((item) => item);
-    setHourses(hoursesArr);
-
-    let tempForMid = props.temp.map((temp, index) => {
-      return Math.round(temp.temp);
-    });
-    let midVal = Math.round(
-      tempForMid.reduce((a, b) => a + b, 0) / tempForMid.length
-    );
-
-    if (midVal > 25) {
-      setPalette("rgba(141, 141, 141, .3)");
-    } else if (midVal >= 10) {
-      setPalette("#C5C5C5");
-    } else if (midVal > 0) {
-      setPalette("#F2F2F2");
-    } else if (midVal <= 0 && midVal > -10) {
-      setPalette("#FFF1FE");
-    } else if (midVal <= -10 && midVal > -20) {
-      setPalette("#F1F2FF");
-    } else if (midVal <= 20) {
-      setPalette("rgba(69, 157, 233, .3)");
+const ChartComponent = ({ hourly = [] }) => {
+  const chartModel = useMemo(() => {
+    if (!hourly.length) {
+      return {
+        labels: [],
+        data: [],
+        tempMin: 0,
+        tempMax: 1,
+        palette: "#F2F2F2",
+      };
     }
-  }, [props]);
+
+    const rounded = hourly.map((item) => Math.round(item.temp));
+    const sampledTemps = rounded.filter((_, index) => index % 5 === 0);
+    const sampledHours = hourly
+      .map((item, index) => (index % 6 === 0 ? formatHour(item.dt) : null))
+      .filter(Boolean);
+
+    const midVal = Math.round(
+      rounded.reduce((sum, value) => sum + value, 0) / rounded.length
+    );
+
+    return {
+      labels: sampledHours,
+      data: sampledTemps,
+      tempMin: Math.min(...rounded) - 3,
+      tempMax: Math.max(...rounded) + 3,
+      palette: buildPalette(midVal),
+    };
+  }, [hourly]);
+
+  const chartData = useMemo(
+    () => ({
+      labels: chartModel.labels,
+      datasets: [
+        {
+          data: chartModel.data,
+          borderWidth: 1,
+          pointRadius: 3,
+          lineTension: 0.5,
+          fill: {
+            target: "origin",
+            above: chartModel.palette,
+            below: chartModel.palette,
+          },
+        },
+      ],
+    }),
+    [chartModel]
+  );
+
+  const chartOptions = useMemo(
+    () => ({
+      animation: false,
+      animations: false,
+      responsive: false,
+      elements: {
+        point: {
+          borderColor: "transparent",
+          backgroundColor: "transparent",
+        },
+      },
+      plugins: {
+        datalabels: {
+          anchor: "center",
+          align: (context) => {
+            const value = context.dataset.data[context.dataIndex];
+            return value < 0 ? "start" : "end";
+          },
+          padding: 4,
+          formatter: (val) => `${val}`,
+          labels: {
+            value: {
+              color: "#C5C5C5",
+            },
+          },
+          font: {
+            size: 6,
+            family: "Jost",
+          },
+        },
+        legend: {
+          display: false,
+        },
+      },
+      scales: {
+        x: {
+          display: false,
+          ticks: {
+            font: { size: 8 },
+            maxRotation: 0,
+            minRotation: 0,
+            padding: 0,
+          },
+          grid: {
+            display: false,
+            drawTicks: false,
+          },
+        },
+        y: {
+          min: chartModel.tempMin,
+          max: chartModel.tempMax,
+          display: false,
+          grid: {
+            display: false,
+          },
+        },
+      },
+    }),
+    [chartModel.tempMin, chartModel.tempMax]
+  );
 
   return (
     <Line
-      data={{
-        labels: hourses,
-        datasets: [
-          {
-            data: temp,
-            borderWidth: 1,
-            pointRadius: 3,
-            lineTension: 0.5,
-
-            fill: {
-              target: "origin",
-              above: palette,
-              below: palette,
-            },
-          },
-        ],
-      }}
-      options={{
-        elements: {
-          point: {
-            borderColor: "transparent",
-            backgroundColor: "transparent",
-          },
-        },
-
-        plugins: {
-          datalabels: {
-            anchor: "center",
-            align: function (context) {
-              var value = context.dataset.data[context.dataIndex];
-
-              // let a = value.y
-              return value < 0 ? "start" : "end";
-            },
-            // offset: 2,
-            padding: 4,
-            // textMargin: 4,
-            formatter: (val) => `${val}`,
-            labels: {
-              value: {
-                color: "#C5C5C5",
-              },
-            },
-            font: {
-              size: 6,
-              family: "Jost",
-            },
-          },
-          legend: {
-            display: false,
-          },
-        },
-        scales: {
-          //   xAxis: {
-          //     ticks: {
-          //         maxTicksLimit: 10
-          //     }
-          // },
-          x: {
-            display: false,
-            // type: 'linear',
-
-            ticks: {
-              font: {
-                size: 8,
-              },
-              // beginAtZero: true,
-              // autoSkip: true,
-              // maxTicksLimit: 8.1,
-              maxRotation: 0,
-              minRotation: 0,
-              padding: 0,
-              // labelOffset: -10,
-              // stepSize: 1,
-              // autoSkipPadding: 5,
-              // labelOffset: 20,
-              // align: 'center',
-            },
-            grid: {
-              display: false,
-              // offsetGridLines: true,
-              drawTicks: false,
-            },
-          },
-          y: {
-            min: tempMin,
-            max: tempMax,
-
-            display: false,
-            ticks: {
-              // beginAtZero: true,
-              // maxTicksLimit: 5,
-              // display: false,
-            },
-            grid: {
-              display: false,
-            },
-          },
-        },
-      }}
+      data={chartData}
+      options={chartOptions}
       plugins={[ChartDataLabels]}
       width={320}
       height={70}
@@ -160,4 +140,4 @@ const ChartComponent = (props) => {
   );
 };
 
-export default ChartComponent;
+export default React.memo(ChartComponent);

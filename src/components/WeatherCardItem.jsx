@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import LocalityComponent from "./card-details-components/LocalityComponent";
 import IconInfoComponent from "./card-details-components/IconInfoComponent";
 import DateComponent from "./card-details-components/DateComponent";
@@ -9,32 +9,24 @@ import FeelsLikeComponent from "./card-details-components/FeelsLikeComponent";
 import InfoComponent from "./card-details-components/InfoComponent";
 import { useTranslation } from "react-i18next";
 
+const formatHour = (timestamp) => {
+  const formatTime = (n) => (n < 10 ? `0${n}` : `${n}`);
+  const date = new Date(timestamp * 1000);
+  return `${formatTime(date.getHours())}:${formatTime(date.getMinutes())}`;
+};
+
 const WeatherCardItem = (props) => {
   const { t } = useTranslation();
+  const { dataCard, order } = props;
 
   const monthlyTranslateArray = (array) =>
-    array.map((month) => {
-      return t(`months.${month}`);
-    });
+    array.map((month) => t(`months.${month}`));
   const daysTranslateArray = (array) =>
-    array.map((month) => {
-      return t(`days.${month}`);
-    });
-
-  const hourseBuilder = (timestamp) => {
-    let formatTime = (n) => {
-      if (n < 10) return "0" + n;
-      return n;
-    };
-    let hourse = formatTime(new Date(timestamp * 1000).getHours());
-    let minute = formatTime(new Date(timestamp * 1000).getMinutes());
-
-    return `${hourse}:${minute}`;
-  };
+    array.map((day) => t(`days.${day}`));
 
   const dateBuilder = (timestamp) => {
-    let formatTime = new Date(timestamp * 1000);
-    var months = monthlyTranslateArray([
+    const formatTime = new Date(timestamp * 1000);
+    const months = monthlyTranslateArray([
       "Jan",
       "Feb",
       "Mar",
@@ -48,7 +40,7 @@ const WeatherCardItem = (props) => {
       "Nov",
       "Dec",
     ]);
-    let days = daysTranslateArray([
+    const days = daysTranslateArray([
       "Sun",
       "Mon",
       "Tue",
@@ -57,48 +49,60 @@ const WeatherCardItem = (props) => {
       "Fri",
       "Sat",
     ]);
-    let day = days[formatTime.getDay()];
-    let month = months[formatTime.getMonth()];
-    let date = formatTime.getDate();
+    const day = days[formatTime.getDay()];
+    const month = months[formatTime.getMonth()];
+    const date = formatTime.getDate();
 
     return `${day}, ${date} ${month}`;
   };
 
+  const hourLabels = useMemo(
+    () => dataCard.weatherData.hourly.map((item) => formatHour(item.dt)),
+    [dataCard.weatherData.hourly]
+  );
+
   const handleRemoveCard = () => {
-    let paramsList = JSON.parse(localStorage.getItem("params"));
-    let newList = paramsList.filter((item, index) => index !== props.order);
+    const paramsList = JSON.parse(localStorage.getItem("params")) || [];
+    const removed = paramsList[order];
+    const newList = paramsList.filter((_, index) => index !== order);
     localStorage.setItem("params", JSON.stringify(newList));
-    props.removeWeatherCard(props.dataCard.id);
+
+    if (removed && removed.isUserLocation) {
+      localStorage.setItem("userLocation", JSON.stringify(null));
+    }
+
+    props.removeWeatherCard(dataCard.id);
   };
 
   const handleChangeUnits = (units) => () => {
-    let paramsList = JSON.parse(localStorage.getItem("params"));
-    let newList = paramsList.map((item, index) => {
-      if (index === props.order) {
-        item.units = units;
-        return item;
-      } else {
-        return item;
+    if (dataCard.units === units) return;
+
+    const paramsList = JSON.parse(localStorage.getItem("params")) || [];
+    const newList = paramsList.map((item, index) => {
+      if (index === order) {
+        return { ...item, units };
       }
+      return item;
     });
     localStorage.setItem("params", JSON.stringify(newList));
-    let currentItem = paramsList.filter((item, index) => index === props.order);
+
+    const currentItem = newList[order];
+    if (!currentItem) return;
+
     props.getUnitsThunk(
-      currentItem[0].lat,
-      currentItem[0].lng,
+      currentItem.lat,
+      currentItem.lng,
       units,
-      currentItem[0].id,
-      currentItem[0].lang
+      currentItem.id,
+      currentItem.lang
     );
   };
 
   return (
     <div className="weatherCardItem">
       <div className="weatherCardItem__Top">
-        <LocalityComponent locality={props.dataCard.geoData} />
-        <IconInfoComponent
-          iconInfo={props.dataCard.weatherData.current.weather[0]}
-        />
+        <LocalityComponent locality={dataCard.geoData} />
+        <IconInfoComponent iconInfo={dataCard.weatherData.current.weather[0]} />
 
         <button className="removeBtn" onClick={handleRemoveCard}>
           <div className="removeBtn__inner"></div>
@@ -107,55 +111,57 @@ const WeatherCardItem = (props) => {
 
       <div className="weatherCardItem__CityDate">
         <DateComponent
-          date={dateBuilder(props.dataCard.weatherData.current.dt)}
-          hourse={hourseBuilder(props.dataCard.weatherData.current.dt)}
+          date={dateBuilder(dataCard.weatherData.current.dt)}
+          hourse={formatHour(dataCard.weatherData.current.dt)}
         />
       </div>
 
       <div className="weatherCardItem__Center">
-        <ChartComponent
-          hourses={props.dataCard.weatherData.hourly.map((hourse) =>
-            hourseBuilder(hourse.dt)
-          )}
-          temp={props.dataCard.weatherData.hourly}
-        />
-        <HoursesComponent
-          hourses={props.dataCard.weatherData.hourly.map((hourse) =>
-            hourseBuilder(hourse.dt)
-          )}
-        />
+        <ChartComponent hourly={dataCard.weatherData.hourly} />
+        <HoursesComponent hourses={hourLabels} />
       </div>
       <div className="weatherCardItem__Bottom">
         <div className="weatherCardItem__Bottom_Left">
           <div className="temp">
-            <TempComponent temp={props.dataCard.weatherData.current.temp} />
+            <TempComponent temp={dataCard.weatherData.current.temp} />
             <div className="temp-switch">
               <button
+                type="button"
                 onClick={handleChangeUnits("metric")}
-                className={props.dataCard.units === "metric" && "active"}
+                className={dataCard.units === "metric" ? "active" : undefined}
               >
                 °C
               </button>
               <span className="separ">|</span>
               <button
+                type="button"
                 onClick={handleChangeUnits("imperial")}
-                className={props.dataCard.units === "imperial" && "active"}
+                className={
+                  dataCard.units === "imperial" ? "active" : undefined
+                }
               >
                 °F
               </button>
             </div>
           </div>
           <FeelsLikeComponent
-            temp={props.dataCard.weatherData.current.feels_like}
-            units={props.dataCard.units}
+            temp={dataCard.weatherData.current.feels_like}
+            units={dataCard.units}
           />
         </div>
         <div className="weatherCardItem__Bottom_Right">
-          <InfoComponent info={props.dataCard.weatherData.current} />
+          <InfoComponent info={dataCard.weatherData.current} />
         </div>
       </div>
     </div>
   );
 };
 
-export default WeatherCardItem;
+export default React.memo(WeatherCardItem, (prev, next) => {
+  return (
+    prev.order === next.order &&
+    prev.dataCard === next.dataCard &&
+    prev.removeWeatherCard === next.removeWeatherCard &&
+    prev.getUnitsThunk === next.getUnitsThunk
+  );
+});
