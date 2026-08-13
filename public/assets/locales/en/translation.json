@@ -1,7 +1,11 @@
 {
   "search": {
-    "btn": "Add",
-    "placeholder": "City name..."
+    "btn": "Add city",
+    "placeholder": "Search city...",
+    "loading": "Searching...",
+    "noResults": "No cities found",
+    "clear": "Clear",
+    "scriptError": "English is selected — type city names in Latin (e.g. Kyiv). Switch to RU/UA for Cyrillic."
   },
   "emptyList": "Add a city to see the weather",
   "feelsLike": "Feels like",
