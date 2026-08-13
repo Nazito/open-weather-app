@@ -21,6 +21,7 @@ const normalizeAppLang = (lang) =>
 
 const WeatherHeader = (props) => {
   const { t } = useTranslation();
+  const { showToast } = props;
 
   const [lang, setLang] = useState(
     () => localStorage.getItem("i18nextLng") || i18n.language || "en"
@@ -86,8 +87,8 @@ const WeatherHeader = (props) => {
         console.error(error);
         setSuggestions([]);
         setSearchError(t("search.failed"));
-        if (props.showToast) {
-          props.showToast({
+        if (showToast) {
+          showToast({
             type: "error",
             message: t("search.failed"),
           });
@@ -104,7 +105,7 @@ const WeatherHeader = (props) => {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [address, coordinates.lat, lang, t, props.showToast]);
+  }, [address, coordinates.lat, lang, t, showToast]);
 
   const handleChangeAddress = (event) => {
     setCoordinates({ lat: null, lng: null });
@@ -141,8 +142,8 @@ const WeatherHeader = (props) => {
     const paramsList = JSON.parse(localStorage.getItem("params")) || [];
 
     if (hasDuplicateLocation(paramsList, coordinates.lat, coordinates.lng)) {
-      if (props.showToast) {
-        props.showToast({
+      if (showToast) {
+        showToast({
           type: "info",
           message: t("search.duplicateCity"),
         });

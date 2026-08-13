@@ -64,12 +64,12 @@ const ForecastModal = ({ card, onClose }) => {
     (card.geoData && (card.geoData.city || card.geoData.locality)) || "";
   const country = (card.geoData && card.geoData.country) || "";
   const current = card.weatherData.current;
-  const daily = card.weatherData.daily || [];
 
   const visibleDays = useMemo(() => {
+    const daily = card.weatherData.daily || [];
     if (range === "week") return daily.slice(0, 7);
     return daily.slice(0, 16);
-  }, [daily, range]);
+  }, [card.weatherData.daily, range]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
