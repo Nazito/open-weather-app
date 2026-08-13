@@ -1,4 +1,9 @@
 {
+  "brand": {
+    "name": "Open Weather",
+    "tag": "Local forecasts",
+    "lang": "Language"
+  },
   "search": {
     "btn": "Add city",
     "placeholder": "Search city...",
@@ -7,7 +12,8 @@
     "clear": "Clear",
     "scriptError": "English is selected — type city names in Latin (e.g. Kyiv). Switch to RU/UA for Cyrillic."
   },
-  "emptyList": "Add a city to see the weather",
+  "emptyList": "No cities yet",
+  "emptyListHint": "Search for a city above or allow geolocation to see the weather.",
   "feelsLike": "Feels like",
   "wind": "Wind:",
   "humidity": "Humidity:",

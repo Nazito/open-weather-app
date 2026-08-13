@@ -251,6 +251,23 @@ const WeatherHeader = (props) => {
 
   return (
     <header className="header">
+      <div className="header__brand">
+        <span className="header__brandMark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path
+              d="M7.5 16.5h9.2a3.7 3.7 0 0 0 .3-7.4 5.2 5.2 0 0 0-10.1-1.2A3.8 3.8 0 0 0 7.5 16.5Z"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <span className="header__brandText">
+          <span className="header__brandName">{t("brand.name")}</span>
+          <span className="header__brandTag">{t("brand.tag")}</span>
+        </span>
+      </div>
+
       <div className="searchBox" ref={searchBoxRef}>
         <div className="searchBox__wrap">
           <div
@@ -356,22 +373,19 @@ const WeatherHeader = (props) => {
         </button>
       </div>
 
-      <div className="langMenu">
-        <div className="langSelected">
-          {lang}
-          <span className="langSelected__trigger"></span>
-        </div>
-        <ul className="langList">
-          <li className="langItem" onClick={() => handleChangeLang("en")}>
-            EN
-          </li>
-          <li className="langItem" onClick={() => handleChangeLang("ua")}>
-            UA
-          </li>
-          <li className="langItem" onClick={() => handleChangeLang("ru")}>
-            RU
-          </li>
-        </ul>
+      <div className="langMenu" role="group" aria-label={t("brand.lang")}>
+        {["en", "ua", "ru"].map((code) => (
+          <button
+            key={code}
+            type="button"
+            className={`langItem${
+              normalizeAppLang(lang) === code ? " langItem--active" : ""
+            }`}
+            onClick={() => handleChangeLang(code)}
+          >
+            {code}
+          </button>
+        ))}
       </div>
     </header>
   );

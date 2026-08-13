@@ -175,105 +175,154 @@ select:-webkit-autofill {
 }
 /* ======================== */
 .weatherApp {
+  min-height: 100vh;
   font-family: "Jost", sans-serif;
   font-weight: normal;
+  color: #2f2f2f;
+  background:
+    radial-gradient(1200px 480px at 12% -10%, rgba(69, 157, 233, 0.28), transparent 60%),
+    radial-gradient(900px 420px at 88% 0%, rgba(255, 241, 254, 0.7), transparent 55%),
+    linear-gradient(180deg, #f4f9fd 0%, #eaf3fb 42%, #e7eef5 100%);
 }
-/* ======================== */
-.container {
-  padding: 20px 40px;
+
+.weatherApp .container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 56px;
+}
+
+.weatherApp main {
+  margin-top: 28px;
+}
+
+.weatherApp .mainWrap {
+  min-height: 280px;
 }
 /* ======================== */
 .header {
-  /* margin-bottom: 10px; */
-  padding: 20px 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(47, 84, 126, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: headerIn 0.35s ease;
+}
+
+@keyframes headerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+.header__brandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #5aacf0 0%, #459de9 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(69, 157, 233, 0.35);
+}
+
+.header__brandText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.header__brandName {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #243447;
+}
+
+.header__brandTag {
+  font-size: 11px;
+  color: #7f8b99;
+  font-weight: 400;
 }
 /* ======================== */
 .langMenu {
   position: relative;
-  width: 71px;
-}
-
-.langMenu:hover .langList {
-  opacity: 1;
-  visibility: visible;
-}
-
-.langMenu:hover .langSelected__trigger::after {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.langSelected {
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
   align-items: center;
-  font-size: 16px;
-  line-height: 23px;
-  text-transform: uppercase;
-}
-
-.langSelected__trigger {
-  position: relative;
-  width: 10px;
-  height: 10px;
-}
-
-.langSelected__trigger::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  border-left: 1px solid;
-  border-top: 1px solid;
-  transform: translate(-50%, calc(-50% - 2.5px)) rotate(-135deg);
-  transition: all 0.3s;
-}
-
-.langList {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  width: 100%;
-  padding: 3px 0;
-  box-shadow: 0px 3px 6px #00000029;
-  background: #fff;
-  z-index: 10;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 
 .langItem {
-  padding: 0 5px;
   list-style: none;
-  line-height: 23px;
-  font-size: 14px;
-  transform: all 0.3s;
+  min-width: 40px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #6b7785;
+  font-family: "Jost", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .langItem:hover {
-  background: #f2f2f2;
+  color: #2f2f2f;
+}
+
+.langItem--active {
+  background: #ffffff;
+  color: #459de9;
+  box-shadow: 0 2px 8px rgba(36, 52, 71, 0.08);
 }
 /* ======================== */
 .searchBox {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  flex: 1;
+  justify-content: center;
+  max-width: 520px;
 }
 
 .searchBox__wrap {
   position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .searchBox__control {
   position: relative;
   display: flex;
   align-items: center;
-  width: 320px;
+  width: 100%;
   height: 42px;
   background: #ffffff;
   border: 1px solid transparent;
@@ -365,7 +414,7 @@ select:-webkit-autofill {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  width: 320px;
+  width: 100%;
   max-height: 280px;
   overflow-y: auto;
   padding: 6px;
@@ -443,6 +492,7 @@ select:-webkit-autofill {
   line-height: 20px;
   font-family: "Jost", sans-serif;
   cursor: pointer;
+  flex-shrink: 0;
   transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
 }
 
@@ -458,6 +508,99 @@ select:-webkit-autofill {
   opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 280px;
+  padding: 40px 24px;
+  text-align: center;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px dashed rgba(69, 157, 233, 0.35);
+  animation: emptyIn 0.4s ease;
+}
+
+@keyframes emptyIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.emptyState__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  border-radius: 16px;
+  background: rgba(69, 157, 233, 0.12);
+  color: #459de9;
+}
+
+.emptyState__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #243447;
+}
+
+.emptyState__text {
+  margin: 0;
+  max-width: 320px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #7f8b99;
+}
+
+.weatherApp .grid {
+  row-gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .header__brand {
+    order: 1;
+  }
+
+  .langMenu {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .searchBox {
+    order: 3;
+    width: 100%;
+  }
+
+  .searchBox__wrap,
+  .searchBox__control,
+  .searchBox__Autocomplite,
+  .searchBox__error {
+    width: 100%;
+    max-width: none;
+  }
+
+  .searchBox__control {
+    width: 100%;
+  }
+
+  .searchBox__Autocomplite {
+    width: 100%;
+  }
 }
 /* ======================== */
 .weatherCardItem {
