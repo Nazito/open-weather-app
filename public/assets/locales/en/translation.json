@@ -18,6 +18,18 @@
   "emptyListHint": "Search for a city above or allow geolocation to see the weather.",
   "dragCard": "Drag to reorder",
   "removeCard": "Remove card",
+  "units": {
+    "label": "Temperature unit"
+  },
+  "forecast": {
+    "title": "Forecast",
+    "week": "Week",
+    "outlook": "16 days",
+    "outlookHint": "Longer outlook from the forecast model (up to 16 days).",
+    "empty": "Forecast is not available for this city.",
+    "close": "Close",
+    "openCard": "Open detailed forecast"
+  },
   "geo": {
     "loadingTitle": "Detecting your location",
     "loadingText": "Please allow location access in the browser prompt.",

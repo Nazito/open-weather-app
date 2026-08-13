@@ -72,7 +72,8 @@ const ChartComponent = ({ hourly = [] }) => {
     () => ({
       animation: false,
       animations: false,
-      responsive: false,
+      responsive: true,
+      maintainAspectRatio: false,
       elements: {
         point: {
           borderColor: "transparent",
@@ -130,13 +131,13 @@ const ChartComponent = ({ hourly = [] }) => {
   );
 
   return (
-    <Line
-      data={chartData}
-      options={chartOptions}
-      plugins={[ChartDataLabels]}
-      width={320}
-      height={70}
-    />
+    <div className="weatherCardItem__chartWrap">
+      <Line
+        data={chartData}
+        options={chartOptions}
+        plugins={[ChartDataLabels]}
+      />
+    </div>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DndContext,
@@ -16,12 +16,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import WeatherCardItem from "./WeatherCardItem";
+import ForecastModal from "./ForecastModal";
 
 const SortableWeatherCard = ({
   item,
   order,
   removeWeatherCard,
   getUnitsThunk,
+  onOpenForecast,
 }) => {
   const {
     attributes,
@@ -41,7 +43,9 @@ const SortableWeatherCard = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid__col${isDragging ? " grid__col--dragging" : ""}`}
+      className={`weatherGrid__item${
+        isDragging ? " weatherGrid__item--dragging" : ""
+      }`}
     >
       <WeatherCardItem
         order={order}
@@ -49,6 +53,7 @@ const SortableWeatherCard = ({
         removeWeatherCard={removeWeatherCard}
         getUnitsThunk={getUnitsThunk}
         dragHandleProps={{ ...attributes, ...listeners }}
+        onOpenForecast={onOpenForecast}
       />
     </div>
   );
@@ -56,10 +61,25 @@ const SortableWeatherCard = ({
 
 const WeatherList = (props) => {
   const { t } = useTranslation();
+  const [openCardId, setOpenCardId] = useState(null);
+
   const itemIds = useMemo(
     () => props.weatherList.map((item) => String(item.id)),
     [props.weatherList]
   );
+
+  const openCard = useMemo(
+    () => props.weatherList.find((item) => item.id === openCardId) || null,
+    [props.weatherList, openCardId]
+  );
+
+  const handleOpenForecast = useCallback((cardId) => {
+    setOpenCardId(cardId);
+  }, []);
+
+  const handleCloseForecast = useCallback(() => {
+    setOpenCardId(null);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -106,25 +126,32 @@ const WeatherList = (props) => {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-        <div className="grid">
-          {props.weatherList.map((item, index) => (
-            <SortableWeatherCard
-              key={item.id}
-              item={item}
-              order={index}
-              removeWeatherCard={props.removeWeatherCard}
-              getUnitsThunk={props.getUnitsThunk}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+          <div className="weatherGrid">
+            {props.weatherList.map((item, index) => (
+              <SortableWeatherCard
+                key={item.id}
+                item={item}
+                order={index}
+                removeWeatherCard={props.removeWeatherCard}
+                getUnitsThunk={props.getUnitsThunk}
+                onOpenForecast={handleOpenForecast}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {openCard && (
+        <ForecastModal card={openCard} onClose={handleCloseForecast} />
+      )}
+    </>
   );
 };
 
