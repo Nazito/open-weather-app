@@ -1,7 +1,9 @@
 name = "open-weather-app"
+main = "worker.js"
 compatibility_date = "2024-12-01"
 
-# Serve CRA production output as static assets (SPA).
 [assets]
 directory = "./build"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"
