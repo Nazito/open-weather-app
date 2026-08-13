@@ -61,7 +61,8 @@ const WeatherCardItem = (props) => {
     [dataCard.weatherData.hourly]
   );
 
-  const handleRemoveCard = () => {
+  const handleRemoveCard = (event) => {
+    event.stopPropagation();
     const paramsList = JSON.parse(localStorage.getItem("params")) || [];
     const removed = paramsList[order];
     const newList = paramsList.filter((_, index) => index !== order);
@@ -74,7 +75,8 @@ const WeatherCardItem = (props) => {
     props.removeWeatherCard(dataCard.id);
   };
 
-  const handleChangeUnits = (units) => () => {
+  const handleChangeUnits = (units) => (event) => {
+    event.stopPropagation();
     if (dataCard.units === units) return;
 
     const paramsList = JSON.parse(localStorage.getItem("params")) || [];
@@ -98,8 +100,28 @@ const WeatherCardItem = (props) => {
     );
   };
 
+  const handleOpenForecast = () => {
+    if (props.onOpenForecast) {
+      props.onOpenForecast(dataCard.id);
+    }
+  };
+
+  const handleKeyOpen = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleOpenForecast();
+    }
+  };
+
   return (
-    <div className="weatherCardItem">
+    <div
+      className="weatherCardItem weatherCardItem--clickable"
+      onClick={handleOpenForecast}
+      onKeyDown={handleKeyOpen}
+      role="button"
+      tabIndex={0}
+      aria-label={t("forecast.openCard")}
+    >
       <button
         type="button"
         className="removeBtn"
@@ -115,6 +137,18 @@ const WeatherCardItem = (props) => {
           aria-label={t("dragCard")}
           title={t("dragCard")}
           {...(props.dragHandleProps || {})}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (props.dragHandleProps && props.dragHandleProps.onClick) {
+              props.dragHandleProps.onClick(event);
+            }
+          }}
+          onKeyDown={(event) => {
+            event.stopPropagation();
+            if (props.dragHandleProps && props.dragHandleProps.onKeyDown) {
+              props.dragHandleProps.onKeyDown(event);
+            }
+          }}
         >
           <svg viewBox="0 0 12 18" width="14" height="20" aria-hidden="true">
             <circle cx="3" cy="3.5" r="1.6" fill="currentColor" />
@@ -151,21 +185,32 @@ const WeatherCardItem = (props) => {
         <div className="weatherCardItem__Bottom_Left">
           <div className="temp">
             <TempComponent temp={dataCard.weatherData.current.temp} />
-            <div className="temp-switch">
+            <div
+              className="temp-switch"
+              role="group"
+              aria-label={t("units.label", { defaultValue: "Temperature unit" })}
+            >
               <button
                 type="button"
                 onClick={handleChangeUnits("metric")}
-                className={dataCard.units === "metric" ? "active" : undefined}
+                className={
+                  dataCard.units === "metric"
+                    ? "temp-switch__btn active"
+                    : "temp-switch__btn"
+                }
+                aria-pressed={dataCard.units === "metric"}
               >
                 °C
               </button>
-              <span className="separ">|</span>
               <button
                 type="button"
                 onClick={handleChangeUnits("imperial")}
                 className={
-                  dataCard.units === "imperial" ? "active" : undefined
+                  dataCard.units === "imperial"
+                    ? "temp-switch__btn active"
+                    : "temp-switch__btn"
                 }
+                aria-pressed={dataCard.units === "imperial"}
               >
                 °F
               </button>
@@ -190,6 +235,7 @@ export default React.memo(WeatherCardItem, (prev, next) => {
     prev.dataCard === next.dataCard &&
     prev.removeWeatherCard === next.removeWeatherCard &&
     prev.getUnitsThunk === next.getUnitsThunk &&
-    prev.dragHandleProps === next.dragHandleProps
+    prev.dragHandleProps === next.dragHandleProps &&
+    prev.onOpenForecast === next.onOpenForecast
   );
 });

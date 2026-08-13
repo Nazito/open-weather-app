@@ -136,13 +136,28 @@ const normalizeWeather = (data) => {
   const current = data.current;
   const nowMs = Date.now();
 
-  const hourly = data.hourly.time
+  const hourly = (data.hourly?.time || [])
     .map((time, index) => ({
       dt: Math.floor(new Date(time).getTime() / 1000),
       temp: data.hourly.temperature_2m[index],
     }))
     .filter((item) => item.dt * 1000 >= nowMs - 30 * 60 * 1000)
     .slice(0, 48);
+
+  const daily = (data.daily?.time || []).map((time, index) => {
+    const code = data.daily.weather_code[index];
+    return {
+      dt: Math.floor(new Date(time).getTime() / 1000),
+      tempMax: data.daily.temperature_2m_max[index],
+      tempMin: data.daily.temperature_2m_min[index],
+      weather: [
+        {
+          icon: wmoToOwIcon(code),
+          code,
+        },
+      ],
+    };
+  });
 
   return {
     current: {
@@ -160,6 +175,7 @@ const normalizeWeather = (data) => {
       ],
     },
     hourly,
+    daily,
   };
 };
 
@@ -179,7 +195,12 @@ export const weatherAPI = {
             "pressure_msl",
           ].join(","),
           hourly: "temperature_2m",
-          forecast_days: 2,
+          daily: [
+            "weather_code",
+            "temperature_2m_max",
+            "temperature_2m_min",
+          ].join(","),
+          forecast_days: 16,
           wind_speed_unit: "ms",
           timezone: "auto",
           temperature_unit: units === "imperial" ? "fahrenheit" : "celsius",
