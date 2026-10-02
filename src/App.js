@@ -10,6 +10,8 @@ import {
 } from "./redux/weather-reducer";
 import WeatherList from "./components/WeatherList";
 import WeatherHeader from "./components/WeatherHeader";
+import ReviewsSection from "./components/ReviewsSection";
+import SupportSection from "./components/SupportSection";
 import ToastStack from "./components/ToastStack";
 import { createDefaultCityParams } from "./constants/defaultCities";
 import { geolocationAPI } from "./api/api";
@@ -308,6 +310,8 @@ const WeatherApp = (props) => {
               reorderWeatherCards={props.reorderWeatherCards}
             />
           </div>
+          <ReviewsSection />
+          <SupportSection />
         </main>
       </div>
 

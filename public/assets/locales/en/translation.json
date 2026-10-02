@@ -103,5 +103,34 @@
     "Thu": "Thu",
     "Fri": "Fri",
     "Sat": "Sat"
+  },
+  "reviews": {
+    "title": "What people say",
+    "subtitle": "Short notes from people who use Open Weather for daily planning.",
+    "ratingLabel": "5 out of 5 stars",
+    "items": {
+      "anna": {
+        "name": "Anna K.",
+        "role": "Traveler",
+        "text": "Clean cards, fast search, and the 7-day view is exactly what I need before a trip."
+      },
+      "oleh": {
+        "name": "Oleh M.",
+        "role": "Remote worker",
+        "text": "I keep a few cities open and drag them into the order I check every morning."
+      },
+      "maria": {
+        "name": "Maria S.",
+        "role": "Parent",
+        "text": "Switching °C/°F is obvious, and the longer outlook helps plan the week ahead."
+      }
+    }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Need help or found a bug? Reach out — we usually reply within one business day.",
+    "reveal": "Show support email",
+    "hint": "The address stays hidden until you ask, to reduce spam.",
+    "mailSubject": "Open Weather support"
   }
 }
