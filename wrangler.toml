@@ -2,8 +2,10 @@ name = "open-weather-app"
 main = "worker.js"
 compatibility_date = "2024-12-01"
 
-# Cloudflare dashboard → Settings → Variables → Secret:
-# WEB3FORMS_ACCESS_KEY — from https://web3forms.com (recipient email set there only)
+# Web3Forms Access Key is a public form id (safe in client/docs).
+# Dashboard "Build variables" do NOT reach Worker runtime — keep it here for deploy.
+[vars]
+WEB3FORMS_ACCESS_KEY = "dfc73505-7a45-4e72-8593-eb47213d053c"
 
 [assets]
 directory = "./build"

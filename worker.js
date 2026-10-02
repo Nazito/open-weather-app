@@ -16,7 +16,10 @@ const handleSupport = async (request, env) => {
     return json({ ok: false, error: "method_not_allowed" }, 405);
   }
 
-  const accessKey = env.WEB3FORMS_ACCESS_KEY;
+  const accessKey =
+    env.WEB3FORMS_ACCESS_KEY ||
+    env.WEB3FORMS_KEY ||
+    env.ACCESS_KEY;
   if (!accessKey) {
     return json({ ok: false, error: "not_configured" }, 503);
   }
