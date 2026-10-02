@@ -1681,23 +1681,116 @@ select:-webkit-autofill {
   border-color: #3a8fd8;
 }
 
-.supportSection__btn--link {
+.supportModal__panel {
+  max-width: 520px;
+}
+
+.supportModal__header {
+  margin-bottom: 16px;
+  padding-right: 12px;
+}
+
+.supportModal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.supportModal__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2f2f2f;
+}
+
+.supportModal__textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px 14px;
+  border: 1px solid rgba(69, 157, 233, 0.22);
+  border-radius: 10px;
+  background: #f8fafc;
+  font-family: "Jost", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2f2f2f;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.supportModal__textarea:focus {
+  outline: none;
+  border-color: #459de9;
   background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(69, 157, 233, 0.15);
+}
+
+.supportModal__error {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #c0392b;
+}
+
+.supportModal__hint {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #8a94a1;
+}
+
+.supportModal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.supportModal__send {
+  min-height: 42px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: #459de9;
+  color: #ffffff;
+  font-family: "Jost", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.supportModal__send:hover {
+  background: #3a8fd8;
+}
+
+.supportModal__cancel {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(69, 157, 233, 0.25);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #6b7785;
+  font-family: "Jost", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.supportModal__cancel:hover {
+  background: #f3f8fd;
   color: #459de9;
 }
 
-.supportSection__btn--link:hover {
-  background: #f3f8fd;
-  border-color: rgba(69, 157, 233, 0.55);
-  color: #2f6fb0;
+.supportModal__send:disabled,
+.supportModal__cancel:disabled,
+.forecastModal__close:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
-.supportSection__hint {
-  margin: 0;
-  max-width: 280px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #8a94a1;
+.supportModal__success {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 12px;
 }
 
 /* ==================================== */
