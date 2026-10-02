@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Open Weather",
+  "name": "Open Weather — local forecasts",
+  "description": "Current weather, 7-day and 16-day outlook for cities worldwide.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#459de9",
+  "background_color": "#eaf3fb"
 }

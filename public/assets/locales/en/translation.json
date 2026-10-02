@@ -103,5 +103,50 @@
     "Thu": "Thu",
     "Fri": "Fri",
     "Sat": "Sat"
+  },
+  "reviews": {
+    "title": "What people say",
+    "subtitle": "Short notes from people who use Open Weather for daily planning.",
+    "ratingLabel": "5 out of 5 stars",
+    "items": {
+      "anna": {
+        "name": "Anna K.",
+        "role": "Traveler",
+        "text": "Clean cards, fast search, and the 7-day view is exactly what I need before a trip."
+      },
+      "oleh": {
+        "name": "Oleh M.",
+        "role": "Remote worker",
+        "text": "I keep a few cities open and drag them into the order I check every morning."
+      },
+      "maria": {
+        "name": "Maria S.",
+        "role": "Parent",
+        "text": "Switching °C/°F is obvious, and the longer outlook helps plan the week ahead."
+      }
+    }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Need help or found a bug? Reach out — we usually reply within one business day.",
+    "contactBtn": "Write to support",
+    "modalTitle": "Contact support",
+    "modalText": "Describe your question or issue. We will receive it by email.",
+    "messageLabel": "Your message",
+    "messagePlaceholder": "What happened? Steps to reproduce, browser, city…",
+    "send": "Send message",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "close": "Close",
+    "done": "Done",
+    "emptyMessage": "Please enter a message before sending.",
+    "messageTooShort": "Please write at least 10 characters.",
+    "messageTooLong": "Message is too long (max 5000 characters).",
+    "sendFailed": "Could not send the message. Try again later.",
+    "notConfigured": "Support is temporarily unavailable.",
+    "sendHint": "We will receive your message directly — no email app needed.",
+    "successTitle": "Message sent",
+    "successText": "Thanks! We will get back to you as soon as we can.",
+    "mailSubject": "Open Weather support"
   }
 }
